@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notara — Your Beautiful Notes</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0e17;
+    --surface: #1a1829;
+    --card: #221f35;
+    --card-hover: #2a2742;
+    --accent: #ff6b6b;
+    --accent2: #ffd166;
+    --accent3: #06d6a0;
+    --accent4: #a29bfe;
+    --text: #fffffe;
+    --muted: #a7a9be;
+    --border: rgba(255,255,255,0.07);
+    --radius: 16px;
+    --shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(162,155,254,0.12) 0%, transparent 70%);
+    top: -200px; left: -200px;
+    pointer-events: none; z-index: 0;
+    animation: blobPulse 8s ease-in-out infinite alternate;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(255,107,107,0.1) 0%, transparent 70%);
+    bottom: -150px; right: -150px;
+    pointer-events: none; z-index: 0;
+    animation: blobPulse 10s ease-in-out infinite alternate-reverse;
+  }
+  @keyframes blobPulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.15); }
+  }
+  header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(15,14,23,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex; align-items: center; gap: 1.5rem;
+    height: 70px;
+  }
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-style: italic;
+    background: linear-gradient(135deg, var(--accent), var(--accent4));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .logo span { font-style: normal; font-weight: 700; }
+  .search-wrap {
+    flex: 1;
+    position: relative;
+    max-width: 480px;
+  }
+  .search-wrap svg {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    color: var(--muted); pointer-events: none;
+  }
+  #searchInput {
+    width: 100%;
+    padding: 10px 14px 10px 42px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  #searchInput::placeholder { color: var(--muted); }
+  #searchInput:focus {
+    border-color: var(--accent4);
+    box-shadow: 0 0 0 3px rgba(162,155,254,0.15);
+  }
+  .filter-tabs {
+    display: flex; gap: 0.4rem; margin-left: auto;
+  }
+  .tab-btn {
+    padding: 6px 14px;
+    border-radius: 50px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .tab-btn.active, .tab-btn:hover {
+    background: var(--card-hover);
+    color: var(--text);
+    border-color: var(--accent4);
+  }
+  .app {
+    position: relative; z-index: 1;
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+  .hero {
+    text-align: center;
+    padding: 2.5rem 0 2rem;
+    animation: fadeUp 0.6s ease both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .hero h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 400;
+    line-height: 1.2;
+  }
+  .hero h2 em { font-style: italic; color: var(--accent); }
+  .hero p { color: var(--muted); margin-top: 0.5rem; font-size: 0.95rem; }
+  .stats {
+    display: flex; gap: 1rem; justify-content: center;
+    margin-bottom: 2rem;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 20px;
+    text-align: center;
+  }
+  .stat .val {
+    font-size: 1.4rem; font-weight: 700;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .stat .lbl { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .note-form {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow);
+    animation: fadeUp 0.6s 0.2s ease both;
+    position: relative;
+    overflow: hidden;
+  }
+  .note-form::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent4), var(--accent3));
+  }
+  .form-row { display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .form-row input, .form-row select {
+    flex: 1; min-width: 160px;
+    padding: 10px 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .form-row input:focus, .form-row select:focus {
+    border-color: var(--accent4);
+    box-shadow: 0 0 0 3px rgba(162,155,254,0.12);
+  }
+  .form-row select option { background: var(--card); }
+  textarea#noteContent {
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    resize: vertical;
+    min-height: 100px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    margin-bottom: 1rem;
+    line-height: 1.6;
+  }
+  textarea#noteContent:focus {
+    border-color: var(--accent4);
+    box-shadow: 0 0 0 3px rgba(162,155,254,0.12);
+  }
+  .form-actions { display: flex; gap: 0.75rem; align-items: center; }
+  .btn-primary {
+    padding: 10px 24px;
+    background: linear-gradient(135deg, var(--accent), #ff8e53);
+    border: none; border-radius: 50px;
+    color: white;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem; font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 16px rgba(255,107,107,0.3);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(255,107,107,0.4); }
+  .btn-primary:active { transform: translateY(0); }
+  .char-count { margin-left: auto; font-size: 0.78rem; color: var(--muted); }
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1.2rem;
+  }
+  .section-header h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-weight: 400;
+  }
+  .sort-select {
+    padding: 6px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    cursor: pointer;
+    outline: none;
+  }
+  .notes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.2rem;
+  }
+  .note-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    display: flex; flex-direction: column;
+    gap: 0.75rem;
+    transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+    animation: cardIn 0.35s ease both;
+    position: relative;
+    overflow: hidden;
+  }
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(12px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .note-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; bottom: 0; width: 3px;
+    border-radius: 3px 0 0 3px;
+    background: var(--cat-color, var(--accent4));
+  }
+  .note-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 36px rgba(0,0,0,0.3);
+    background: var(--card-hover);
+  }
+  .card-top { display: flex; align-items: flex-start; gap: 0.5rem; }
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    flex: 1;
+    line-height: 1.3;
+    word-break: break-word;
+  }
+  .category-badge {
+    font-size: 0.68rem;
+    padding: 3px 9px;
+    border-radius: 50px;
+    background: var(--cat-bg, rgba(162,155,254,0.15));
+    color: var(--cat-color, var(--accent4));
+    white-space: nowrap;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    flex-shrink: 0;
+  }
+  .card-content {
+    color: var(--muted);
+    font-size: 0.87rem;
+    line-height: 1.65;
+    word-break: break-word;
+    flex: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .card-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border);
+  }
+  .card-date { font-size: 0.73rem; color: var(--muted); }
+  .card-actions { display: flex; gap: 0.4rem; }
+  .icon-btn {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 0.85rem;
+  }
+  .icon-btn:hover { background: var(--card-hover); color: var(--text); }
+  .icon-btn.edit:hover { border-color: var(--accent2); color: var(--accent2); }
+  .icon-btn.delete:hover { border-color: var(--accent); color: var(--accent); }
+  .icon-btn.pin:hover { border-color: var(--accent3); color: var(--accent3); }
+  .pinned-badge {
+    position: absolute; top: 10px; right: 10px;
+    font-size: 0.72rem;
+    background: rgba(6,214,160,0.12);
+    color: var(--accent3);
+    padding: 2px 8px;
+    border-radius: 50px;
+  }
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--muted);
+    grid-column: 1/-1;
+    animation: fadeUp 0.5s ease both;
+  }
+  .empty-state .big-icon { font-size: 4rem; margin-bottom: 1rem; opacity: 0.4; }
+  .empty-state h4 { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--text); margin-bottom: 0.4rem; }
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 1rem;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.25s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2rem;
+    width: 100%; max-width: 520px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+    transform: scale(0.95);
+    transition: transform 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+  .modal::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--accent4), var(--accent3));
+  }
+  .modal-overlay.open .modal { transform: scale(1); }
+  .modal h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    margin-bottom: 1.25rem;
+  }
+  .modal input, .modal select, .modal textarea {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    margin-bottom: 0.85rem;
+    transition: border-color 0.2s;
+  }
+  .modal input:focus, .modal select:focus, .modal textarea:focus { border-color: var(--accent4); }
+  .modal textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
+  .modal select option { background: var(--card); }
+  .modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 0.5rem; }
+  .btn-save {
+    padding: 10px 24px;
+    background: linear-gradient(135deg, var(--accent4), #7c75e8);
+    border: none; border-radius: 50px;
+    color: white; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 16px rgba(162,155,254,0.3);
+  }
+  .btn-save:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(162,155,254,0.4); }
+  .btn-muted {
+    padding: 10px 20px;
+    background: transparent; border: 1px solid var(--border);
+    border-radius: 50px; color: var(--muted);
+    font-family: 'DM Sans', sans-serif; font-size: 0.9rem;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-muted:hover { background: var(--card); color: var(--text); }
+  .toast {
+    position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-size: 0.88rem;
+    box-shadow: var(--shadow);
+    z-index: 300;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  mark { background: rgba(255,209,102,0.25); color: inherit; border-radius: 2px; }
+  @media (max-width: 640px) {
+    header { flex-wrap: wrap; height: auto; padding: 0.75rem 1rem; gap: 0.75rem; }
+    .filter-tabs { display: none; }
+    .app { padding: 1rem; }
+    .notes-grid { grid-template-columns: 1fr; }
+    .stats { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Nota<span>ra</span></div>
+  <div class="search-wrap">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="searchInput" placeholder="Search notes by title or content…">
+  </div>
+  <div class="filter-tabs">
+    <button class="tab-btn active" data-filter="all">All</button>
+    <button class="tab-btn" data-filter="personal">Personal</button>
+    <button class="tab-btn" data-filter="work">Work</button>
+    <button class="tab-btn" data-filter="ideas">Ideas</button>
+    <button class="tab-btn" data-filter="study">Study</button>
+    <button class="tab-btn" data-filter="pinned">📌 Pinned</button>
+  </div>
+</header>
+
+<main class="app">
+  <div class="hero">
+    <h2>Capture every <em>thought</em>,<br>never lose an idea.</h2>
+    <p>Beautiful notes that stay with you.</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="val" id="totalCount">0</div><div class="lbl">Notes</div></div>
+    <div class="stat"><div class="val" id="pinnedCount">0</div><div class="lbl">Pinned</div></div>
+    <div class="stat"><div class="val" id="todayCount">0</div><div class="lbl">Today</div></div>
+  </div>
+
+  <div class="note-form">
+    <div class="form-row">
+      <input type="text" id="noteTitle" placeholder="Note title…" maxlength="80">
+      <select id="noteCategory">
+        <option value="personal">🌿 Personal</option>
+        <option value="work">💼 Work</option>
+        <option value="ideas">💡 Ideas</option>
+        <option value="study">📚 Study</option>
+        <option value="other">✨ Other</option>
+      </select>
+    </div>
+    <textarea id="noteContent" placeholder="Write something beautiful… (Ctrl+Enter to save)" maxlength="1000"></textarea>
+    <div class="form-actions">
+      <button class="btn-primary" id="addNoteBtn">+ Add Note</button>
+      <span class="char-count"><span id="charUsed">0</span>/1000</span>
+    </div>
+  </div>
+
+  <div class="section-header">
+    <h3 id="sectionTitle">All Notes</h3>
+    <select class="sort-select" id="sortSelect">
+      <option value="newest">Newest first</option>
+      <option value="oldest">Oldest first</option>
+      <option value="alpha">A → Z</option>
+    </select>
+  </div>
+
+  <div class="notes-grid" id="notesGrid"></div>
+</main>
+
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <h3>Edit Note ✏️</h3>
+    <input type="text" id="editTitle" placeholder="Title" maxlength="80">
+    <select id="editCategory">
+      <option value="personal">🌿 Personal</option>
+      <option value="work">💼 Work</option>
+      <option value="ideas">💡 Ideas</option>
+      <option value="study">📚 Study</option>
+      <option value="other">✨ Other</option>
+    </select>
+    <textarea id="editContent" placeholder="Note content…" maxlength="1000"></textarea>
+    <div class="modal-actions">
+      <button class="btn-muted" id="closeModal">Cancel</button>
+      <button class="btn-save" id="saveEdit">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <span id="toastIcon">✓</span>
+  <span id="toastMsg">Done!</span>
+</div>
+
+<script>
+  const STORAGE_KEY = 'notara_v2';
+  let notes = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  let activeFilter = 'all';
+  let searchQuery = '';
+  let editingId = null;
+
+  const catConfig = {
+    personal: { color: '#06d6a0', bg: 'rgba(6,214,160,0.12)', label: '🌿 Personal' },
+    work:     { color: '#ffd166', bg: 'rgba(255,209,102,0.12)', label: '💼 Work' },
+    ideas:    { color: '#ff6b6b', bg: 'rgba(255,107,107,0.12)', label: '💡 Ideas' },
+    study:    { color: '#a29bfe', bg: 'rgba(162,155,254,0.12)', label: '📚 Study' },
+    other:    { color: '#74b9ff', bg: 'rgba(116,185,255,0.12)', label: '✨ Other' },
+  };
+
+  function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(notes)); }
+  function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+  function showToast(msg, icon = '✓') {
+    const t = document.getElementById('toast');
+    document.getElementById('toastMsg').textContent = msg;
+    document.getElementById('toastIcon').textContent = icon;
+    t.classList.add('show');
+    clearTimeout(t._t);
+    t._t = setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  function updateStats() {
+    const today = new Date().toDateString();
+    document.getElementById('totalCount').textContent = notes.length;
+    document.getElementById('pinnedCount').textContent = notes.filter(n => n.pinned).length;
+    document.getElementById('todayCount').textContent = notes.filter(n => new Date(n.created).toDateString() === today).length;
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function highlight(text, q) {
+    if (!q) return escHtml(text);
+    const re = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi');
+    return escHtml(text).replace(re, '<mark>$1</mark>');
+  }
+
+  function formatDate(ts) {
+    const diff = Math.floor((Date.now() - ts) / 1000);
+    if (diff < 60) return 'Just now';
+    if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+    if (diff < 604800) return Math.floor(diff/86400) + 'd ago';
+    return new Date(ts).toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+  }
+
+  function getFiltered() {
+    let list = [...notes];
+    if (activeFilter === 'pinned') list = list.filter(n => n.pinned);
+    else if (activeFilter !== 'all') list = list.filter(n => n.category === activeFilter);
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(n => n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q));
+    }
+    const s = document.getElementById('sortSelect').value;
+    if (s === 'newest') list.sort((a,b) => b.created - a.created);
+    else if (s === 'oldest') list.sort((a,b) => a.created - b.created);
+    else list.sort((a,b) => a.title.localeCompare(b.title));
+    list.sort((a,b) => (b.pinned?1:0) - (a.pinned?1:0));
+    return list;
+  }
+
+  function render() {
+    const grid = document.getElementById('notesGrid');
+    const list = getFiltered();
+    updateStats();
+
+    const titles = { all:'All Notes', pinned:'Pinned Notes', personal:'Personal', work:'Work', ideas:'Ideas', study:'Study' };
+    const base = searchQuery ? `Results for "${searchQuery}"` : (titles[activeFilter] || 'Notes');
+    document.getElementById('sectionTitle').textContent = base + ` (${list.length})`;
+
+    if (list.length === 0) {
+      grid.innerHTML = `<div class="empty-state">
+        <div class="big-icon">${searchQuery ? '🔍' : '✍️'}</div>
+        <h4>${searchQuery ? 'No notes match' : 'No notes yet'}</h4>
+        <p>${searchQuery ? 'Try a different keyword.' : 'Write your first note above!'}</p>
+      </div>`;
+      return;
+    }
+
+    grid.innerHTML = list.map((n, i) => {
+      const cfg = catConfig[n.category] || catConfig.other;
+      return `<div class="note-card" style="--cat-color:${cfg.color};--cat-bg:${cfg.bg};animation-delay:${i*0.04}s">
+        ${n.pinned ? '<span class="pinned-badge">📌 Pinned</span>' : ''}
+        <div class="card-top">
+          <div class="card-title">${highlight(n.title || 'Untitled', searchQuery)}</div>
+          <div class="category-badge">${cfg.label}</div>
+        </div>
+        <div class="card-content">${highlight(n.content, searchQuery) || '<em style="opacity:.4">No content</em>'}</div>
+        <div class="card-footer">
+          <span class="card-date">${formatDate(n.created)}</span>
+          <div class="card-actions">
+            <button class="icon-btn pin" title="${n.pinned?'Unpin':'Pin'}" onclick="togglePin('${n.id}')">
+              ${n.pinned ? '📌' : '📍'}
+            </button>
+            <button class="icon-btn edit" title="Edit" onclick="openEdit('${n.id}')">✏️</button>
+            <button class="icon-btn delete" title="Delete" onclick="deleteNote('${n.id}')">🗑️</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── CRUD ──
+  function addNote() {
+    const title = document.getElementById('noteTitle').value.trim();
+    const content = document.getElementById('noteContent').value.trim();
+    const category = document.getElementById('noteCategory').value;
+    if (!title && !content) { showToast('Please add a title or content!', '⚠️'); return; }
+    notes.unshift({ id: genId(), title: title || 'Untitled', content, category, created: Date.now(), pinned: false });
+    save(); render();
+    document.getElementById('noteTitle').value = '';
+    document.getElementById('noteContent').value = '';
+    document.getElementById('charUsed').textContent = '0';
+    showToast('Note created!', '✨');
+  }
+
+  function deleteNote(id) {
+    if (!confirm('Delete this note permanently?')) return;
+    notes = notes.filter(n => n.id !== id);
+    save(); render();
+    showToast('Note deleted', '🗑️');
+  }
+
+  function togglePin(id) {
+    const n = notes.find(n => n.id === id);
+    if (n) { n.pinned = !n.pinned; save(); render(); showToast(n.pinned ? 'Pinned!' : 'Unpinned', '📌'); }
+  }
+
+  function openEdit(id) {
+    const n = notes.find(n => n.id === id);
+    if (!n) return;
+    editingId = id;
+    document.getElementById('editTitle').value = n.title;
+    document.getElementById('editContent').value = n.content;
+    document.getElementById('editCategory').value = n.category;
+    document.getElementById('editModal').classList.add('open');
+  }
+
+  function saveEdit() {
+    const n = notes.find(n => n.id === editingId);
+    if (!n) return;
+    const t = document.getElementById('editTitle').value.trim();
+    const c = document.getElementById('editContent').value.trim();
+    if (!t && !c) { showToast('Note cannot be empty!', '⚠️'); return; }
+    n.title = t || 'Untitled';
+    n.content = c;
+    n.category = document.getElementById('editCategory').value;
+    save(); render(); closeModal();
+    showToast('Note updated!', '✅');
+  }
+
+  function closeModal() {
+    document.getElementById('editModal').classList.remove('open');
+    editingId = null;
+  }
+
+  // ── Listeners ──
+  document.getElementById('addNoteBtn').addEventListener('click', addNote);
+  document.getElementById('saveEdit').addEventListener('click', saveEdit);
+  document.getElementById('closeModal').addEventListener('click', closeModal);
+  document.getElementById('editModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+  document.getElementById('noteContent').addEventListener('input', function() {
+    document.getElementById('charUsed').textContent = this.value.length;
+  });
+  document.getElementById('noteTitle').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('noteContent').focus(); }
+  });
+  document.getElementById('noteContent').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) addNote();
+  });
+  document.getElementById('searchInput').addEventListener('input', function() {
+    searchQuery = this.value.trim();
+    render();
+  });
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      activeFilter = this.dataset.filter;
+      render();
+    });
+  });
+  document.getElementById('sortSelect').addEventListener('change', render);
+
+  // ── Seed ──
+  if (notes.length === 0) {
+    notes = [
+      { id: genId(), title: 'Welcome to Notara ✨', content: 'Your beautiful notes app. Create, edit, pin and organize your thoughts. Press Ctrl+Enter to quickly save a note!', category: 'personal', created: Date.now() - 5000, pinned: true },
+      { id: genId(), title: 'Project Brainstorm', content: 'Build a full-stack app with React + Node.js. Add dark mode, real-time sync, and mobile support. Launch by end of month.', category: 'ideas', created: Date.now() - 86400000, pinned: false },
+      { id: genId(), title: 'Weekly Goals', content: 'Complete the GenAI internship CRUD project. Read 30 pages of a good book. Exercise 3x. Cook at home more often.', category: 'work', created: Date.now() - 172800000, pinned: false },
+      { id: genId(), title: 'Study: JavaScript Closures', content: 'A closure gives access to an outer function scope from an inner function. Useful for data encapsulation and factory functions.', category: 'study', created: Date.now() - 259200000, pinned: false },
+    ];
+    save();
+  }
+  render();
+</script>
+</body>
+</html>
